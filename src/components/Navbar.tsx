@@ -1,7 +1,7 @@
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import { Fragment } from "react";
-
+import { Link } from "react-router-dom";
 import Logo from "../assets/logo-min.png";
 import { useLocation } from "react-router-dom";
 
@@ -55,9 +55,9 @@ export const Navbar = () => {
 									<div className="ml-10 flex items-baseline space-x-4">
 										{navigation.map(
 											({ current, href, name }) => (
-												<a
+												<Link
 													key={name}
-													href={href}
+													to={href}
 													className={classNames(
 														current
 															? "bg-gray-900 text-white"
@@ -71,7 +71,7 @@ export const Navbar = () => {
 													}
 												>
 													{name}
-												</a>
+												</Link>
 											),
 										)}
 									</div>
@@ -108,8 +108,8 @@ export const Navbar = () => {
 													({ href, name }) => (
 														<Menu.Item key={name}>
 															{({ active }) => (
-																<a
-																	href={href}
+																<Link
+																	to={href}
 																	className={classNames(
 																		active
 																			? "bg-gray-100"
@@ -118,7 +118,7 @@ export const Navbar = () => {
 																	)}
 																>
 																	{name}
-																</a>
+																</Link>
 															)}
 														</Menu.Item>
 													),

@@ -1,12 +1,11 @@
-import { IconCoin } from "@tabler/icons-react";
 import { ChangeEvent, useEffect, useState } from "react";
+import { IconCoin } from "@tabler/icons-react";
 
-import { currenciesMock } from "../mocks";
-import { Currency as ICurrency } from "../interfaces";
 import { Currency, DropdownOrderBy, Header, SearchInput } from "../components";
-
+import { useGetCurrencies } from "../api";
+import { Currency as ICurrency } from "../interfaces";
+import {FetchingData} from "../components/FetchingData.tsx";
 export const Currencies = () => {
-	const [currencies, setCurrencies] = useState<ICurrency[]>([]);
 	const [currentOrderOption, setCurrentOrderOption] = useState("");
 
 	const orderOptions = [
@@ -14,10 +13,6 @@ export const Currencies = () => {
 		{ label: "Simbolo", value: "symbol" },
 		{ label: "Valor de cambio", value: "value" },
 	];
-
-	useEffect(() => {
-		setCurrencies(currenciesMock);
-	}, []);
 
 	const orderCurrencies = (
 		currencies: ICurrency[],
@@ -35,22 +30,37 @@ export const Currencies = () => {
 		return orderedCurrencies;
 	};
 
+	const [search] = useState("");
+	const [currencies, setCurrencies] = useState<ICurrency[]>([]);
+	const { isError, isLoading, mutate} = useGetCurrencies();
+
+	useEffect(() => {
+		getCurrenciesInfo();
+	}, [search]);
+
 	const handleDropdown = (e: ChangeEvent<HTMLSelectElement>) => {
 		setCurrentOrderOption(e.target.value);
 		setCurrencies(orderCurrencies(currencies, e.target.value));
 	};
 
-	const handleSearch = (query: string) => {
-		if (query === "") {
-			setCurrencies(currenciesMock);
+	const handleSearch = (searchWord: string) => {
+		if (searchWord === "") {
+			//Reset currencies array only when search bar is empty
+			getCurrenciesInfo();
 		} else {
-			const filteredCurrencies = currenciesMock.filter((currency) => {
-				if (currency.name.toLowerCase().includes(query.toLowerCase()))
-					return currency;
+			const newCurrencies = currencies.filter((currency) => {
+				return ( currency.name.toLowerCase().includes(searchWord.toLowerCase()) ||  currency.symbol.toLowerCase().includes(searchWord.toLowerCase()) ||  currency.value.toString().toLowerCase().includes(searchWord.toLowerCase()) );
 			});
-
-			setCurrencies(filteredCurrencies);
+			setCurrencies(newCurrencies);
 		}
+	};
+
+	const getCurrenciesInfo = () => {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		mutate(search, {
+			onSuccess: (data) => setCurrencies(data),
+		});
 	};
 
 	return (
@@ -74,30 +84,32 @@ export const Currencies = () => {
 			</Header>
 
 			<section className="flex flex-col items-center h-[calc(100vh-10rem)] mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-				{currencies.length === 0 ? (
-					<div className="flex flex-col items-center justify-center h-full">
-						<p className="text-3xl font-bold text-center">
-							¡Oh no! :(
-						</p>
+				<FetchingData isLoading={isLoading} isError={isError}>
+						{ currencies.length === 0 ? (
+							<div className="flex flex-col items-center justify-center h-full">
+								<p className="text-3xl font-bold text-center">
+									¡Oh no! :(
+								</p>
 
-						<p className="mt-5 text-lg text-center">
-							Algo no ha salido como esperabamos. Por favor,
-							intentalo más tarde.
-						</p>
-					</div>
-				) : (
-					<ul
-						role="list"
-						className="grid w-full gap-3 overflow-auto divide-y divide-gray-100 sm:grid-cols-2 xl:grid-cols-4 my-7"
-					>
-						{currencies.map((currency) => (
-							<Currency
-								currency={currency}
-								key={currency.symbol}
-							/>
-						))}
-					</ul>
-				)}
+								<p className="mt-5 text-lg text-center">
+									Algo no ha salido como esperabamos. Por favor,
+									intentalo más tarde.
+								</p>
+							</div>
+						) : (
+							<ul
+								role="list"
+								className="grid w-full gap-3 overflow-auto divide-y divide-gray-100 sm:grid-cols-2 xl:grid-cols-4 my-7"
+							>
+								{currencies.map((currency) => (
+									<Currency
+										currency={currency}
+										key={currency.symbol}
+									/>
+								))}
+							</ul>
+					)}
+				</FetchingData>
 			</section>
 		</>
 	);
